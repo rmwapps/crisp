@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>Crisp Full-Screen Test</title>
+        <style>
+            /* ── Reset ── */
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            html,
+            body {
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                background: #fff;
+            }
+
+            /* ── Loading state ── */
+            #loading {
+                position: fixed;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                z-index: 0;
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                color: #9ca3af;
+            }
+            #loading .spinner {
+                width: 48px;
+                height: 48px;
+                border: 3px solid #e5e7eb;
+                border-top-color: #3b82f6;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            #loading p {
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            /* ── Full-screen Crisp overrides ── */
+            .crisp-client {
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100dvh !important;
+                z-index: 2147483000 !important;
+                display: flex !important;
+                align-items: stretch !important;
+            }
+            #crisp-chatbox {
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+            }
+            .cc-w7v18 {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                position: absolute !important;
+                inset: 0 !important;
+                border-radius: 0 !important;
+            }
+            .cc-1mh91 {
+                height: 100% !important;
+                max-height: 100% !important;
+            }
+            /* Hide the bubble button */
+            .cc-lk42u,
+            .cc-2ob4j {
+                display: none !important;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Loading chat…</p>
+        </div>
+
+        <script>
+            // ── Configure BEFORE loader runs ──
+            window.$crisp = [];
+            window.CRISP_WEBSITE_ID = "1e652069-9ee7-4c7f-84df-49a6f33c8efd";
+            window.CRISP_RUNTIME_CONFIG = {
+                lock_full_view: true,
+                lock_maximized: true,
+            };
+        </script>
+        <script src="https://client.crisp.chat/l.js" async></script>
+
+        <script>
+            // ── Poll for the Crisp client DOM, then open full-screen ──
+            var poll = setInterval(function () {
+                var el = document.querySelector(".crisp-client");
+                if (el) {
+                    clearInterval(poll);
+                    // Wait one frame for Vue to settle
+                    requestAnimationFrame(function () {
+                        window.$crisp.push(["do", "chat:show"]);
+                        window.$crisp.push(["do", "chat:open"]);
+
+                        // Verify integration: set a known visitor nickname
+                        window.$crisp.push([
+                            "set",
+                            "user:nickname",
+                            ["Rizki Nasution"],
+                        ]);
+
+                        // Hide loading indicator
+                        var loading = document.getElementById("loading");
+                        if (loading) loading.style.display = "none";
+                    });
+                }
+            }, 300);
+
+            // Safety timeout – show retry button
+            setTimeout(function () {
+                if (document.querySelector(".crisp-client")) return;
+                clearInterval(poll);
+                var loading = document.getElementById("loading");
+                if (loading) {
+                    loading.innerHTML =
+                        '<p style="color:#ef4444;">Could not load the chat widget.</p>' +
+                        '<button onclick="location.reload()" style="margin-top:12px;padding:8px 20px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">Retry</button>';
+                }
+            }, 15000);
+        </script>
+    </body>
+</html>

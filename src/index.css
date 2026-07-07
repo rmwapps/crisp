@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* ===============================================
+   Crisp Full-Screen Override Styles
+   These override Crisp's embedded widget CSS
+   to make the chat fill the entire container.
+   =============================================== */
+
+html,
+body,
+#root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* --- Root Crisp container --- */
+.crisp-client {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    z-index: 2147483000 !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+}
+
+/* --- The chatbox wrapper (inside .crisp-client) --- */
+#crisp-chatbox,
+.cc-165wh[data-hidden="false"],
+.cc-165wh:not([data-hidden="true"]) {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* --- The chat window panel --- */
+.cc-w7v18 {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: 0 !important;
+}
+
+/* --- Hide the floating bubble/button area --- */
+.cc-lk42u,
+.cc-2ob4j,
+.cc-13wro[data-visible="false"],
+.cc-13wro[data-maximized="true"] {
+    /* Keep visible for the tooltip/entice bar if needed,
+     but we override positioning to be inline */
+}
+
+/* --- Override the channel dropdown position --- */
+/* Ensure the chat interface is at full height */
+.cc-1mh91 {
+    height: 100% !important;
+    max-height: 100% !important;
+}
+
+/* --- Ensure the message list fills available space --- */
+[class*="cc-"] .cc-1gl3c,
+[class*="cc-"] .cc-1yjqi {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+}
+
+/* --- Hide Crisp's own scroll lock on <html> --- */
+html.cc-1rplw {
+    position: static !important;
+    overflow: auto !important;
+}
