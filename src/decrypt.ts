@@ -148,32 +148,10 @@ function timingSafe(a: Uint8Array, b: Uint8Array): boolean {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  SHA3-512 HMAC — uses Web Crypto if available, else fails
+//  SHA3-512 HMAC — pure JS fallback using js-sha3
 // ═══════════════════════════════════════════════════════════
 
-async function hmacSha3Sign(
-  keyData: Uint8Array,
-  data: Uint8Array,
-): Promise<Uint8Array> {
-  const subtle = crypto.subtle as any;
-
-  // Try native Web Crypto SHA3-512 first (Chrome 117+, Firefox 126+)
-  try {
-    const key = await subtle.importKey(
-      "raw",
-      keyData,
-      { name: "HMAC", hash: "SHA3-512" },
-      false,
-      ["sign"],
-    );
-    return new Uint8Array(await subtle.sign("HMAC", key, data));
-  } catch {
-    throw new Error(
-      "SHA3-512 is not supported by this browser. " +
-        "Please use Chrome 117+, Firefox 126+, or Edge 117+.",
-    );
-  }
-}
+import { hmacSha3_512 } from "./sha3-hmac";
 
 // ═══════════════════════════════════════════════════════════
 //  Main decrypt (PHP-compatible algorithm)
@@ -215,8 +193,8 @@ export async function decryptAuthorization(
   const sha512Hex = hexEncode(sha512Buf); // 128 hex chars
   const hmacKey = fromBase64(sha512Hex); // base64_decode the hex! (≈96 bytes)
 
-  // ── 3. Verify HMAC-SHA3-512 ──
-  const computedHmac = await hmacSha3Sign(hmacKey, encPem);
+  // ── 3. Verify HMAC-SHA3-512 (pure JS) ──
+  const computedHmac = hmacSha3_512(hmacKey, encPem);
   if (!timingSafe(storedHmac, computedHmac)) {
     throw new Error("HMAC mismatch");
   }
