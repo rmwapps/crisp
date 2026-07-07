@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import CrispChat from "./CrispChat";
+import DebugPanel from "./DebugPanel";
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -29,6 +30,7 @@ export default function App() {
 
   return (
     <div className="w-screen h-dvh relative overflow-hidden bg-white select-none">
+      {/* ── Loading state ── */}
       {!ready && !timedOut && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-0 text-gray-400">
           <div className="w-12 h-12 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
@@ -38,9 +40,16 @@ export default function App() {
             </span>
             <span className="text-xs text-gray-400">Connecting to Crisp</span>
           </div>
+          <button
+            onClick={() => setReady(true)}
+            className="mt-4 text-xs text-gray-400 underline hover:text-gray-600 cursor-pointer"
+          >
+            Skip &amp; show debug panel
+          </button>
         </div>
       )}
 
+      {/* ── Timeout fallback ── */}
       {timedOut && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-0 text-gray-400">
           <svg
@@ -68,9 +77,13 @@ export default function App() {
         </div>
       )}
 
+      {/* ── Crisp widget ── */}
       <div className={ready ? "absolute inset-0 z-10" : "hidden"}>
         <CrispChat />
       </div>
+
+      {/* ── Debug floating button + modal ── */}
+      <DebugPanel />
     </div>
   );
 }
