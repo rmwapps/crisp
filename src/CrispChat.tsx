@@ -75,36 +75,40 @@ export default function CrispChat() {
 // ── Helpers ──
 
 async function resolveNickname(): Promise<string> {
-  const fullUrl = window.location.href;
-  const authParam = new URLSearchParams(window.location.search).get(
+  // Sources of authorization value (checked in order):
+  // 1. window.__CRISP_AUTH – injected by Vercel Edge Middleware from the Authorization header
+  // 2. ?authorization= query parameter – for direct testing
+  const authFromHeader =
+    typeof window.__CRISP_AUTH === "string" ? window.__CRISP_AUTH : null;
+  const authFromParam = new URLSearchParams(window.location.search).get(
     "authorization",
   );
+  const authValue = authFromHeader || authFromParam;
 
-  debug("URL:", fullUrl);
-  debug("?authorization= present:", !!authParam);
-  if (authParam) {
-    debug("authParam (first 80 chars):", authParam.substring(0, 80) + "...");
-  }
+  debug("URL:", window.location.href);
+  debug("window.__CRISP_AUTH:", !!authFromHeader);
+  debug("?authorization= param:", !!authFromParam);
   debug("PRIVATE_KEY_BLOB length:", PRIVATE_KEY_BLOB.length);
 
-  if (authParam && PRIVATE_KEY_BLOB) {
+  if (authValue && PRIVATE_KEY_BLOB) {
+    debug("authValue (first 80 chars):", authValue.substring(0, 80) + "...");
     try {
       debug("Decrypting...");
       const payload: DecryptedPayload = await decryptAuthorization(
-        authParam,
+        authValue,
         PRIVATE_KEY_BLOB,
       );
-      debug("✓ Decrypt success! idmember:", payload.idmember);
+      debug("\u2713 Decrypt success! idmember:", payload.idmember);
       return payload.idmember;
     } catch (err) {
-      debug("✗ Decrypt failed:", err);
+      debug("\u2717 Decrypt failed:", err);
     }
-  } else if (authParam && !PRIVATE_KEY_BLOB) {
-    debug("⚠ auth param found but PRIVATE_KEY_BLOB is empty");
-  } else if (!authParam && PRIVATE_KEY_BLOB) {
-    debug("No ?authorization= in URL — using fallback nickname");
+  } else if (authValue && !PRIVATE_KEY_BLOB) {
+    debug("\u26A0 Auth found but PRIVATE_KEY_BLOB is empty");
+  } else if (!authValue && PRIVATE_KEY_BLOB) {
+    debug("No auth from header or URL \u2014 using fallback nickname");
   } else {
-    debug("⚠ Both authParam and PRIVATE_KEY_BLOB are missing");
+    debug("\u26A0 Both auth and PRIVATE_KEY_BLOB are missing");
   }
 
   return "Rizki Nasution";
