@@ -40,12 +40,6 @@ export default function App() {
             </span>
             <span className="text-xs text-gray-400">Connecting to Crisp</span>
           </div>
-          <button
-            onClick={() => setReady(true)}
-            className="mt-4 text-xs text-gray-400 underline hover:text-gray-600 cursor-pointer"
-          >
-            Skip &amp; show debug panel
-          </button>
         </div>
       )}
 
