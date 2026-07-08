@@ -62,12 +62,14 @@ export default function CrispChat() {
         const observer = new MutationObserver(removeCc7mjuy);
         observer.observe(document.body, { childList: true, subtree: true });
 
-        // ── Intercept all link/image clicks inside the chat: append newbrowser=ok ──
-        const handleLinkClick = (e: MouseEvent | TouchEvent) => {
+        // ── Intercept external link/image clicks (capture-phase click only, not touchstart) ──
+        const handleLinkClick = (e: MouseEvent) => {
           const el = (e.target as HTMLElement).closest<HTMLElement>(
-            "a[href], .cc-uyf6m",
+            'a[href]:not([href^="#"]):not([href^="javascript"]):not([href^="data"]):not([href*="crisp"]), .cc-uyf6m',
           );
           if (!el) return;
+
+          debug("[intercept] matched:", el.tagName, el.className);
 
           let urlStr: string | null = null;
 
@@ -95,7 +97,30 @@ export default function CrispChat() {
           }
         };
         document.addEventListener("click", handleLinkClick, true);
-        document.addEventListener("touchstart", handleLinkClick, true);
+
+        // ── Monitor Crisp connection status ──
+        (window as any).$crisp.push([
+          "on",
+          "chat:connection:status",
+          (status: string) => {
+            debug("[crisp-connection]", status);
+          },
+        ]);
+
+        // ── Log visibility changes (file picker open/close) ──
+        document.addEventListener("visibilitychange", () => {
+          debug("[visibility] hidden:", document.hidden, "time:", Date.now());
+        });
+
+        // ── Log uncaught errors ──
+        const errorHandler = (event: ErrorEvent) => {
+          debug("[window-error]", event.message, event.filename);
+        };
+        window.addEventListener("error", errorHandler);
+        const rejectionHandler = (event: PromiseRejectionEvent) => {
+          debug("[unhandled-rejection]", event.reason);
+        };
+        window.addEventListener("unhandledrejection", rejectionHandler);
       } else {
         requestAnimationFrame(poll);
       }

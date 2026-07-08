@@ -36,7 +36,7 @@ function readLogs(): string[] {
 }
 
 export default function DebugPanel() {
-  const [revealed, setRevealed] = useState(false);
+  const [revealed, setRevealed] = useState(import.meta.env.DEV);
   const [open, setOpen] = useState(false);
   const [logs, setLogs] = useState<string[]>(readLogs);
   const [toast, setToast] = useState(false);
