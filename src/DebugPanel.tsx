@@ -230,6 +230,28 @@ export default function DebugPanel() {
   const [hoveredElement, setHoveredElement] = useState<Element | null>(null);
   const [copyToast, setCopyToast] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const findInputRef = useRef<HTMLInputElement>(null);
+  const [findResults, setFindResults] = useState<Element[]>([]);
+  const [findHighlightEl, setFindHighlight] = useState<Element | null>(null);
+  const doFind = useCallback((selector: string) => {
+    if (!selector.trim()) {
+      setFindResults([]);
+      setFindHighlight(null);
+      return;
+    }
+    try {
+      const results = Array.from(document.querySelectorAll(selector.trim()));
+      setFindResults(results);
+      setFindHighlight(null);
+      if (results.length > 0) {
+        setSelectedElement(results[0]);
+        setElementInfo(getElementInfo(results[0]));
+        setFindHighlight(results[0]);
+      }
+    } catch {
+      setFindResults([]);
+    }
+  }, []);
 
   // ── Storage state ──
   const [storageView, setStorageView] = useState<"local" | "session">("local");
@@ -335,6 +357,8 @@ export default function DebugPanel() {
     setElementInfo(null);
     setInspectMode(false);
     setHoveredElement(null);
+    setFindResults([]);
+    setFindHighlight(null);
   }, []);
 
   if (!revealed) {
@@ -498,54 +522,143 @@ export default function DebugPanel() {
               {tab === "elements" && (
                 <div className="flex-1 flex flex-col overflow-hidden">
                   {/* Toolbar */}
-                  <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-700 shrink-0">
-                    <button
-                      onClick={() => {
-                        if (inspectMode) {
-                          // Cancel inspect — reopen modal
-                          setOpen(true);
-                          setInspectMode(false);
-                        } else {
-                          // Start inspect — close modal
-                          setOpen(false);
-                          setInspectMode(true);
-                          setTab("elements");
+                  <div className="flex flex-col shrink-0">
+                    <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-700">
+                      <button
+                        onClick={() => {
+                          if (inspectMode) {
+                            // Cancel inspect — reopen modal
+                            setOpen(true);
+                            setInspectMode(false);
+                          } else {
+                            // Start inspect — close modal
+                            setOpen(false);
+                            setInspectMode(true);
+                            setTab("elements");
+                          }
+                          setSelectedElement(null);
+                          setElementInfo(null);
+                        }}
+                        className={`text-xs px-3 py-1.5 rounded cursor-pointer shrink-0 ${
+                          inspectMode
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-700 hover:bg-gray-600 text-gray-200"
+                        }`}
+                      >
+                        {inspectMode ? "Cancel inspect" : "Pick element"}
+                      </button>
+                      {selectedElement && (
+                        <>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(
+                                getElementInfo(selectedElement).outerHTML,
+                              );
+                              setCopyToast(true);
+                              setTimeout(() => setCopyToast(false), 1500);
+                            }}
+                            className="text-xs px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 cursor-pointer shrink-0"
+                          >
+                            Copy HTML
+                          </button>
+                          <button
+                            onClick={() => {
+                              // Re-inspect same element in case styles changed
+                              setElementInfo(getElementInfo(selectedElement));
+                            }}
+                            className="text-xs px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 cursor-pointer shrink-0"
+                          >
+                            Refresh
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    {/* Find bar */}
+                    <div className="flex items-center gap-2 px-4 py-1.5 border-b border-gray-700 bg-gray-850">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wider shrink-0">
+                        Find
+                      </span>
+                      <input
+                        ref={findInputRef}
+                        type="text"
+                        placeholder="CSS selector, e.g. [aria-label*='voice']"
+                        className="flex-1 bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded border border-gray-700 outline-none focus:border-blue-500 placeholder:text-gray-600"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            doFind(e.currentTarget.value);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() =>
+                          findInputRef.current &&
+                          doFind(findInputRef.current.value)
                         }
-                        setSelectedElement(null);
-                        setElementInfo(null);
-                      }}
-                      className={`text-xs px-3 py-1.5 rounded cursor-pointer ${
-                        inspectMode
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-700 hover:bg-gray-600 text-gray-200"
-                      }`}
-                    >
-                      {inspectMode ? "Cancel inspect" : "Pick element"}
-                    </button>
-                    {selectedElement && (
-                      <>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(
-                              getElementInfo(selectedElement).outerHTML,
-                            );
-                            setCopyToast(true);
-                            setTimeout(() => setCopyToast(false), 1500);
-                          }}
-                          className="text-xs px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 cursor-pointer"
-                        >
-                          Copy HTML
-                        </button>
-                        <button
-                          onClick={() => {
-                            // Re-inspect same element in case styles changed
-                            setElementInfo(getElementInfo(selectedElement));
-                          }}
-                          className="text-xs px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 cursor-pointer"
-                        >
-                          Refresh
-                        </button>
-                      </>
+                        className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 cursor-pointer shrink-0"
+                      >
+                        Search
+                      </button>
+                      {findResults.length > 0 && (
+                        <span className="text-[10px] text-gray-500 shrink-0">
+                          {findResults.length} match
+                          {findResults.length > 1 ? "es" : ""}
+                        </span>
+                      )}
+                    </div>
+                    {/* Find results list */}
+                    {findResults.length > 0 && (
+                      <div className="max-h-24 overflow-y-auto border-b border-gray-700 bg-gray-850/50">
+                        {findResults.map((el, i) => (
+                          <div
+                            key={i}
+                            onClick={() => {
+                              setSelectedElement(el);
+                              setElementInfo(getElementInfo(el));
+                              setFindHighlight(el);
+                            }}
+                            className={`flex items-center gap-2 px-4 py-1.5 text-xs font-mono cursor-pointer hover:bg-gray-700/50 ${
+                              selectedElement === el ? "bg-gray-700" : ""
+                            }`}
+                          >
+                            <span className="text-blue-400 shrink-0">
+                              &lt;{el.tagName.toLowerCase()}
+                            </span>
+                            {el.className && (
+                              <span className="text-green-400 truncate">
+                                .{el.className.split(/\s+/).join(".")}
+                              </span>
+                            )}
+                            {el.getAttribute("aria-label") && (
+                              <span className="text-orange-300 truncate">
+                                "{el.getAttribute("aria-label")}"
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Find highlight overlay */}
+                    {findHighlightEl && (
+                      <div
+                        style={{
+                          position: "fixed",
+                          zIndex: Z - 1,
+                          pointerEvents: "none",
+                          border: "2px solid #f59e0b",
+                          backgroundColor: "rgba(245, 158, 11, 0.15)",
+                          top:
+                            findHighlightEl.getBoundingClientRect().top + "px",
+                          left:
+                            findHighlightEl.getBoundingClientRect().left + "px",
+                          width:
+                            findHighlightEl.getBoundingClientRect().width +
+                            "px",
+                          height:
+                            findHighlightEl.getBoundingClientRect().height +
+                            "px",
+                          transition: "all 0.15s ease",
+                        }}
+                      />
                     )}
                   </div>
 

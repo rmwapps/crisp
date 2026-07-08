@@ -71,12 +71,14 @@ export default function CrispChat() {
         themeStyle.textContent = buildThemeCSS(brand);
         document.head.appendChild(themeStyle);
 
-        // ── Inject: remove .cc-7mjuy element ──
-        const removeCc7mjuy = () => {
-          document.querySelectorAll(".cc-7mjuy").forEach((el) => el.remove());
+        // ── Inject: remove .cc-7mjuy and voice note button ──
+        const removeUnwanted = () => {
+          document
+            .querySelectorAll('.cc-7mjuy, [data-type="speech"]')
+            .forEach((el) => el.remove());
         };
-        removeCc7mjuy();
-        const observer = new MutationObserver(removeCc7mjuy);
+        removeUnwanted();
+        const observer = new MutationObserver(removeUnwanted);
         observer.observe(document.body, { childList: true, subtree: true });
 
         // ── Intercept external link/image clicks (capture-phase click only, not touchstart) ──
