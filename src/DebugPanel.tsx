@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Bug, X } from "lucide-react";
 
 const LOG_KEY = "crisp-chat-debug";
 const Z = 2147483001;
@@ -42,9 +43,7 @@ export default function DebugPanel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bufRef = useRef("");
 
-  // ── Listen for the magic word ──
   const handleKey = useCallback((e: KeyboardEvent) => {
-    // Only care about printable keystrokes in input/textarea or contenteditable
     const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
     if (
       tag !== "input" &&
@@ -53,16 +52,14 @@ export default function DebugPanel() {
     )
       return;
     if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) return;
-
     bufRef.current = (bufRef.current + e.key)
       .toLowerCase()
       .slice(-MAGIC.length);
-
     if (bufRef.current === MAGIC) {
       setRevealed(true);
       setToast(true);
       setTimeout(() => setToast(false), 2000);
-      bufRef.current = ""; // reset so repeated typing re-triggers
+      bufRef.current = "";
     }
   }, []);
 
@@ -71,14 +68,12 @@ export default function DebugPanel() {
     return () => document.removeEventListener("keyup", handleKey);
   }, [handleKey]);
 
-  // ── Poll logs when open ──
   useEffect(() => {
     if (!open) return;
     const id = setInterval(() => setLogs(readLogs()), 500);
     return () => clearInterval(id);
   }, [open]);
 
-  // ── Auto-scroll ──
   useEffect(() => {
     if (open && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -86,30 +81,27 @@ export default function DebugPanel() {
   }, [logs, open]);
 
   if (!revealed) {
-    // Show a brief toast when first revealed, otherwise nothing
     return toast ? (
       <div
         style={{ zIndex: Z }}
-        className="fixed bottom-6 right-6 px-4 py-2 rounded-lg bg-gray-800/90 text-green-400 text-xs font-mono shadow-lg animate-pulse"
+        className="fixed top-4 left-4 px-4 py-2 rounded-lg bg-gray-800/90 text-green-400 text-xs font-mono shadow-lg animate-pulse"
       >
-        🐞 Debug unlocked
+        Debug unlocked
       </div>
     ) : null;
   }
 
   return (
     <>
-      {/* ── Floating toggle button ── */}
       <button
         onClick={() => setOpen((v) => !v)}
         style={{ zIndex: Z }}
-        className="fixed bottom-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-800/80 text-white text-lg shadow-lg hover:bg-gray-700 cursor-pointer select-none"
+        className="fixed top-4 left-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-800/80 text-white shadow-lg hover:bg-gray-700 cursor-pointer select-none"
         title="Toggle debug panel"
       >
-        {open ? "\u2715" : "\uD83D\uDC1E"}
+        {open ? <X size={20} /> : <Bug size={20} />}
       </button>
 
-      {/* ── Modal ── */}
       {open && (
         <div
           style={{ zIndex: Z }}
@@ -117,14 +109,12 @@ export default function DebugPanel() {
         >
           <div className="bg-gray-900 text-gray-100 rounded-xl shadow-2xl w-[90vw] max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3 border-b border-gray-700 shrink-0">
-              <span className="font-semibold text-sm tracking-wide">
-                🐞 Debug
-              </span>
+              <span className="font-semibold text-sm tracking-wide">Debug</span>
               <button
                 onClick={() => setOpen(false)}
-                className="text-gray-400 hover:text-white text-lg leading-none cursor-pointer"
+                className="text-gray-400 hover:text-white cursor-pointer"
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
 
@@ -137,12 +127,12 @@ export default function DebugPanel() {
               )}
               {logs.map((line, i) => {
                 const isError =
-                  line.includes("✗") ||
+                  line.includes("\u2717") ||
                   line.includes("failed") ||
                   line.includes("error");
-                const isWarn = line.includes("⚠");
+                const isWarn = line.includes("\u26A0");
                 const isSuccess =
-                  line.includes("✓") || line.includes("success");
+                  line.includes("\u2713") || line.includes("success");
                 return (
                   <div
                     key={i}
