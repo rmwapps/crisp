@@ -62,27 +62,40 @@ export default function CrispChat() {
         const observer = new MutationObserver(removeCc7mjuy);
         observer.observe(document.body, { childList: true, subtree: true });
 
-        // ── Intercept clicks on image elements: open in new tab instead of Crisp preview ──
-        const handleImageClick = (e: MouseEvent | TouchEvent) => {
-          const target = (e.target as HTMLElement).closest(
-            ".cc-uyf6m",
-          ) as HTMLElement | null;
-          if (!target) return;
+        // ── Intercept all link/image clicks inside the chat: append newbrowser=ok ──
+        const handleLinkClick = (e: MouseEvent | TouchEvent) => {
+          const el = (e.target as HTMLElement).closest<HTMLElement>(
+            "a[href], .cc-uyf6m",
+          );
+          if (!el) return;
 
-          const bg = target.style.backgroundImage;
-          const match = bg.match(/url\("([^"]+)"\)/);
-          if (!match) return;
+          let urlStr: string | null = null;
 
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
+          if (el.tagName === "A") {
+            urlStr = (el as HTMLAnchorElement).href;
+          } else if (el.classList.contains("cc-uyf6m")) {
+            const bg = el.style.backgroundImage;
+            const match = bg.match(/url\("([^"]+)"\)/);
+            if (match) urlStr = match[1];
+          }
 
-          const url = new URL(match[1]);
-          url.searchParams.set("newbrowser", "ok");
-          window.open(url.toString(), "_blank");
+          if (!urlStr) return;
+
+          try {
+            const url = new URL(urlStr, window.location.origin);
+            url.searchParams.set("newbrowser", "ok");
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            window.open(url.toString(), "_blank");
+          } catch {
+            // not a valid URL — let default behavior handle it
+          }
         };
-        document.addEventListener("click", handleImageClick, true);
-        document.addEventListener("touchstart", handleImageClick, true);
+        document.addEventListener("click", handleLinkClick, true);
+        document.addEventListener("touchstart", handleLinkClick, true);
       } else {
         requestAnimationFrame(poll);
       }
