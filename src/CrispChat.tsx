@@ -43,6 +43,24 @@ export default function CrispChat() {
             (window as any).$crisp.push(["set", "user:nickname", [nickname]]);
           });
         });
+
+        // ── Inject: override initial chat height ──
+        const style = document.createElement("style");
+        style.id = "crisp-override-height";
+        style.textContent = `
+          .crisp-client .cc-1wrj8--mode-chat:not(.crisp-client .cc-1wrj8--mode-chat.cc-1wrj8--chat-conversations).cc-1wrj8--status-initial {
+            height: 0px !important;
+          }
+        `;
+        document.head.appendChild(style);
+
+        // ── Inject: remove .cc-7mjuy element ──
+        const removeCc7mjuy = () => {
+          document.querySelectorAll(".cc-7mjuy").forEach((el) => el.remove());
+        };
+        removeCc7mjuy();
+        const observer = new MutationObserver(removeCc7mjuy);
+        observer.observe(document.body, { childList: true, subtree: true });
       } else {
         requestAnimationFrame(poll);
       }
