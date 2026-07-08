@@ -61,6 +61,28 @@ export default function CrispChat() {
         removeCc7mjuy();
         const observer = new MutationObserver(removeCc7mjuy);
         observer.observe(document.body, { childList: true, subtree: true });
+
+        // ── Intercept clicks on image elements: open in new tab instead of Crisp preview ──
+        const handleImageClick = (e: MouseEvent | TouchEvent) => {
+          const target = (e.target as HTMLElement).closest(
+            ".cc-uyf6m",
+          ) as HTMLElement | null;
+          if (!target) return;
+
+          const bg = target.style.backgroundImage;
+          const match = bg.match(/url\("([^"]+)"\)/);
+          if (!match) return;
+
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+
+          const url = new URL(match[1]);
+          url.searchParams.set("newbrowser", "ok");
+          window.open(url.toString(), "_blank");
+        };
+        document.addEventListener("click", handleImageClick, true);
+        document.addEventListener("touchstart", handleImageClick, true);
       } else {
         requestAnimationFrame(poll);
       }
