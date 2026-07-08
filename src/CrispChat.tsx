@@ -54,12 +54,14 @@ export default function CrispChat() {
         `;
         document.head.appendChild(style);
 
-        // ── Inject: remove .cc-7mjuy element ──
-        const removeCc7mjuy = () => {
-          document.querySelectorAll(".cc-7mjuy").forEach((el) => el.remove());
+        // ── Inject: remove unwanted elements ──
+        const removeUnwanted = () => {
+          document
+            .querySelectorAll(".cc-7mjuy, .cc-13ftx")
+            .forEach((el) => el.remove());
         };
-        removeCc7mjuy();
-        const observer = new MutationObserver(removeCc7mjuy);
+        removeUnwanted();
+        const observer = new MutationObserver(removeUnwanted);
         observer.observe(document.body, { childList: true, subtree: true });
 
         // ── Intercept all link/image clicks inside the chat: append newbrowser=ok ──
@@ -69,29 +71,36 @@ export default function CrispChat() {
           );
           if (!el) return;
 
-          let urlStr: string | null = null;
-
+          // ── <a> tags: just rewrite href and let natural navigation happen ──
           if (el.tagName === "A") {
-            urlStr = (el as HTMLAnchorElement).href;
-          } else if (el.classList.contains("cc-uyf6m")) {
-            const bg = el.style.backgroundImage;
-            const match = bg.match(/url\("([^"]+)"\)/);
-            if (match) urlStr = match[1];
+            try {
+              const url = new URL((el as HTMLAnchorElement).href);
+              url.searchParams.set("newbrowser", "ok");
+              (el as HTMLAnchorElement).href = url.toString();
+            } catch {
+              // ignore invalid URLs
+            }
+            return;
           }
 
-          if (!urlStr) return;
+          // ── .cc-uyf6m images: block Crisp overlay, navigate in current window ──
+          if (el.classList.contains("cc-uyf6m")) {
+            const bg = el.style.backgroundImage;
+            const match = bg.match(/url\("([^"]+)"\)/);
+            if (!match) return;
 
-          try {
-            const url = new URL(urlStr, window.location.origin);
-            url.searchParams.set("newbrowser", "ok");
+            try {
+              const url = new URL(match[1]);
+              url.searchParams.set("newbrowser", "ok");
 
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
 
-            window.open(url.toString(), "_blank");
-          } catch {
-            // not a valid URL — let default behavior handle it
+              window.location.href = url.toString();
+            } catch {
+              // not a valid URL — let default behavior handle it
+            }
           }
         };
         document.addEventListener("click", handleLinkClick, true);
