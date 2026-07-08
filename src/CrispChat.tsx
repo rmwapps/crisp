@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { decryptAuthorization, type DecryptedPayload } from "./decrypt";
 import { debug } from "./DebugPanel";
+import { detectBrand, buildThemeCSS, BRAND_APK_NAME } from "./brand";
 
 const WEBSITE_ID = "1e652069-9ee7-4c7f-84df-49a6f33c8efd";
 
@@ -53,6 +54,22 @@ export default function CrispChat() {
           }
         `;
         document.head.appendChild(style);
+
+        const brand = detectBrand();
+        debug("[crisp-brand] detected:", brand);
+
+        // ── Push APK session data ──
+        (window as any).$crisp.push([
+          "set",
+          "session:data",
+          [[["apk", BRAND_APK_NAME[brand]]]],
+        ]);
+
+        // ── Inject: brand-colored theme ──
+        const themeStyle = document.createElement("style");
+        themeStyle.id = "crisp-theme-override";
+        themeStyle.textContent = buildThemeCSS(brand);
+        document.head.appendChild(themeStyle);
 
         // ── Inject: remove .cc-7mjuy element ──
         const removeCc7mjuy = () => {

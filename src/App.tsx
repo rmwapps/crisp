@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import CrispChat from "./CrispChat";
 import DebugPanel from "./DebugPanel";
+import { detectBrand, BRAND_PRIMARY_HEX, setFavicon } from "./brand";
 
 export default function App() {
   const [ready, setReady] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
+
+  const brand = detectBrand();
+  const brandColor = BRAND_PRIMARY_HEX[brand];
+  setFavicon(brand);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -33,7 +38,10 @@ export default function App() {
       {/* ── Loading state ── */}
       {!ready && !timedOut && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-0 text-gray-400">
-          <div className="w-12 h-12 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
+          <div
+            className="w-12 h-12 border-3 border-gray-200 rounded-full animate-spin"
+            style={{ borderTopColor: brandColor }}
+          />
           <div className="flex flex-col items-center gap-1">
             <span className="text-sm font-medium text-gray-500">
               Loading chat...
