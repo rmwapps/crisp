@@ -1,7 +1,6 @@
 /**
  * Vercel Edge Middleware
  *
- * Hexaflate WebView sends `Authorization: ENC Key="...", Signature="..."`
  * as an HTTP header. Since browser JS cannot read request headers,
  * this middleware captures it and injects it into the HTML as
  * `window.__CRISP_AUTH` before the page loads.

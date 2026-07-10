@@ -1,5 +1,4 @@
 /**
- * Browser-side decryption for Hexaflate Encrypted Authorization.
  *
  * Implements the EXACT algorithm from the original PHP source:
  *   - SHA-512(authKey) → hex string → base64_decode → HMAC key
@@ -158,8 +157,6 @@ import { hmacSha3_512 } from "./sha3-hmac";
 // ═══════════════════════════════════════════════════════════
 
 /**
- * Decrypt a Hexaflate encrypted authorization header.
- *
  * Uses the ORIGINAL PHP algorithm:
  *   - HMAC key = base64_decode(hex(SHA-512(base64_decode(authKey))))
  *   - HMAC algorithm: SHA3-512

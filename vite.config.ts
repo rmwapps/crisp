@@ -7,7 +7,6 @@ export default defineConfig({
   server: {
     allowedHosts: [
       "known-instantly-bison.ngrok-free.app",
-      "crisp.hexaflate.com",
     ],
   },
 });
