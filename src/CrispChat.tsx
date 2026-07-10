@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { decryptAuthorization, type DecryptedPayload } from "./decrypt";
 import { debug } from "./DebugPanel";
 import { detectBrand, buildThemeCSS, BRAND_APK_NAME } from "./brand";
+import { fetchResellerInfo, mapFirstRow } from "./resellerService";
 
 const WEBSITE_ID = "1e652069-9ee7-4c7f-84df-49a6f33c8efd";
 
@@ -41,7 +42,37 @@ export default function CrispChat() {
           (window as any).$crisp.push(["do", "chat:open"]);
 
           nicknamePromise.then((nickname) => {
-            (window as any).$crisp.push(["set", "user:nickname", [nickname]]);
+            const crisp = (window as any).$crisp;
+
+            // Always set nickname (from decrypted idmember or reseller name)
+            crisp.push(["set", "user:nickname", [nickname]]);
+
+            // ── Set additional user data from reseller lookup ──
+            const rd = _pendingResellerData;
+            if (rd) {
+              // Individual fields pushed to session data
+              const sessionEntries: [string, string][] = [
+                ["reseller_kode", rd["kode agen"] || ""],
+                ["reseller_nama", rd["nama"] || ""],
+                ["reseller_alamat", rd["alamat"] || ""],
+                ["reseller_level", rd["level"] || ""],
+                ["reseller_stok", rd["stok"] || ""],
+                ["reseller_komisi", rd["komisi"] || ""],
+                ["reseller_poin", rd["poin"] || ""],
+                ["reseller_status", rd["status"] || ""],
+                ["reseller_upline", rd["kode upline"] || ""],
+                ["reseller_referral", rd["kode referral"] || ""],
+                ["reseller_tgldaftar", rd["tgl daftar"] || ""],
+                ["reseller_aktivitas", rd["aktivitas terakhir"] || ""],
+              ];
+
+              // Also store the full raw blob for reference
+              sessionEntries.push(["reseller_raw", JSON.stringify(rd)]);
+
+              crisp.push(["set", "session:data", [sessionEntries]]);
+
+              debug("✓ Crisp reseller session data set:", rd);
+            }
           });
         });
 
@@ -170,6 +201,9 @@ export default function CrispChat() {
 
 // ── Helpers ──
 
+/** Holds reseller data fetched after decryption, consumed by the poll callback */
+let _pendingResellerData: Record<string, string> | null = null;
+
 async function resolveNickname(): Promise<string> {
   const authFromHeader =
     typeof window.__CRISP_AUTH === "string" ? window.__CRISP_AUTH : null;
@@ -192,6 +226,26 @@ async function resolveNickname(): Promise<string> {
         PRIVATE_KEY_BLOB,
       );
       debug("✓ Decrypt success! idmember:", payload.idmember);
+
+      // ── Middleware: fetch reseller info from decrypted idmember ──
+      try {
+        const info = await fetchResellerInfo(payload.idmember);
+        if (info.firstRow) {
+          const mapped = mapFirstRow(info);
+          _pendingResellerData = mapped;
+          debug("✓ Reseller data:", mapped);
+
+          // Use reseller name as nickname if available
+          const name =
+            mapped["nama reseller"] || mapped["nama"] || "";
+          if (name) return name;
+        } else {
+          debug("⚠ No reseller row found for:", payload.idmember, info.error);
+        }
+      } catch (fetchErr) {
+        debug("✗ Reseller fetch failed:", fetchErr);
+      }
+
       return payload.idmember;
     } catch (err) {
       debug("✗ Decrypt failed:", err);
