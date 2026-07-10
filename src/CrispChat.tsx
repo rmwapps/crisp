@@ -47,11 +47,15 @@ export default function CrispChat() {
             // Always set nickname (from decrypted idmember or reseller name)
             crisp.push(["set", "user:nickname", [nickname]]);
 
-            // ── Set additional user data from reseller lookup ──
+            // ── Single session:data push (APK + reseller) ──
+            const brand = detectBrand();
+            const sessionEntries: [string, string][] = [
+              ["apk", BRAND_APK_NAME[brand]],
+            ];
+
             const rd = _pendingResellerData;
             if (rd) {
-              // Individual fields pushed to session data
-              const sessionEntries: [string, string][] = [
+              sessionEntries.push(
                 ["reseller_kode", rd["kode agen"] || ""],
                 ["reseller_nama", rd["nama"] || ""],
                 ["reseller_alamat", rd["alamat"] || ""],
@@ -64,15 +68,14 @@ export default function CrispChat() {
                 ["reseller_referral", rd["kode referral"] || ""],
                 ["reseller_tgldaftar", rd["tgl daftar"] || ""],
                 ["reseller_aktivitas", rd["aktivitas terakhir"] || ""],
-              ];
-
-              // Also store the full raw blob for reference
-              sessionEntries.push(["reseller_raw", JSON.stringify(rd)]);
-
-              crisp.push(["set", "session:data", [sessionEntries]]);
-
-              debug("✓ Crisp reseller session data set:", rd);
+                ["reseller_raw", JSON.stringify(rd)],
+              );
+              debug("✓ Reseller data included in session:", rd);
+            } else {
+              debug("ℹ No reseller data — pushing APK only");
             }
+
+            crisp.push(["set", "session:data", [sessionEntries]]);
           });
         });
 
@@ -88,13 +91,6 @@ export default function CrispChat() {
 
         const brand = detectBrand();
         debug("[crisp-brand] detected:", brand);
-
-        // ── Push APK session data ──
-        (window as any).$crisp.push([
-          "set",
-          "session:data",
-          [[["apk", BRAND_APK_NAME[brand]]]],
-        ]);
 
         // ── Inject: brand-colored theme ──
         const themeStyle = document.createElement("style");
