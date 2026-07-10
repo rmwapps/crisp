@@ -44,6 +44,9 @@ export default function CrispChat() {
           nicknamePromise.then((nickname) => {
             const crisp = (window as any).$crisp;
 
+            debug("[crisp-data] nicknamePromise resolved, nickname:", nickname);
+            debug("[crisp-data] _pendingResellerData:", _pendingResellerData);
+
             // Always set nickname (from decrypted idmember or reseller name)
             crisp.push(["set", "user:nickname", [nickname]]);
 
@@ -70,12 +73,14 @@ export default function CrispChat() {
                 ["reseller_aktivitas", rd["aktivitas terakhir"] || ""],
                 ["reseller_raw", JSON.stringify(rd)],
               );
-              debug("✓ Reseller data included in session:", rd);
+              debug("✓ Reseller data included in session entries:", sessionEntries);
             } else {
-              debug("ℹ No reseller data — pushing APK only");
+              debug("ℹ No reseller data — pushing APK only (rd is null)");
             }
 
+            debug("[crisp-data] Pushing session:data:", JSON.stringify(sessionEntries));
             crisp.push(["set", "session:data", [sessionEntries]]);
+            debug("[crisp-data] session:data push done");
           });
         });
 

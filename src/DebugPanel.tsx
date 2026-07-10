@@ -4,7 +4,9 @@ import { Bug, X, Network, Server, Code2 } from "lucide-react";
 // ── Logging ──────────────────────────────────────────────────────────
 const LOG_KEY = "crisp-chat-debug";
 const Z = 2147483001;
-const MAGIC = "!debugcrisp";
+
+/** How long (ms) to hold the send button before debug unlocks */
+const REVEAL_HOLD_MS = 5000;
 
 export function debug(...args: unknown[]) {
   const msg = args
@@ -215,7 +217,7 @@ export default function DebugPanel() {
   const [logs, setLogs] = useState<string[]>(readLogs);
   const [toast, setToast] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const bufRef = useRef("");
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Network state ──
   const [netList, setNetList] = useState<NetEntry[]>([]);
@@ -257,31 +259,47 @@ export default function DebugPanel() {
   const [storageView, setStorageView] = useState<"local" | "session">("local");
   const refreshStorage = useRef(0);
 
-  // ── Keyboard unlock ──
-  const handleKey = useCallback((e: KeyboardEvent) => {
-    const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
-    if (
-      tag !== "input" &&
-      tag !== "textarea" &&
-      !(e.target as HTMLElement)?.isContentEditable
-    )
-      return;
-    if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) return;
-    bufRef.current = (bufRef.current + e.key)
-      .toLowerCase()
-      .slice(-MAGIC.length);
-    if (bufRef.current === MAGIC) {
-      setRevealed(true);
-      setToast(true);
-      setTimeout(() => setToast(false), 2000);
-      bufRef.current = "";
+  // ── Long-press unlock: hold Crisp send button for 5s ──
+  const clearHold = useCallback(() => {
+    if (holdTimerRef.current !== null) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
     }
   }, []);
 
+  const handlePointerDown = useCallback(
+    (e: PointerEvent) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>(".cc-1qqgc");
+      if (!btn) return;
+      holdTimerRef.current = setTimeout(() => {
+        setRevealed(true);
+        setToast(true);
+        setTimeout(() => setToast(false), 2000);
+        holdTimerRef.current = null;
+      }, REVEAL_HOLD_MS);
+    },
+    [clearHold],
+  );
+
+  const handlePointerUp = useCallback(
+    (e: PointerEvent) => {
+      if (!(e.target as HTMLElement).closest(".cc-1qqgc")) return;
+      clearHold();
+    },
+    [clearHold],
+  );
+
   useEffect(() => {
-    document.addEventListener("keyup", handleKey);
-    return () => document.removeEventListener("keyup", handleKey);
-  }, [handleKey]);
+    // Use capture phase so we see the event before Crisp's own handlers
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    document.addEventListener("pointerup", handlePointerUp, true);
+    document.addEventListener("pointercancel", clearHold, true);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("pointerup", handlePointerUp, true);
+      document.removeEventListener("pointercancel", clearHold, true);
+    };
+  }, [handlePointerDown, handlePointerUp, clearHold]);
 
   // ── Console polling ──
   useEffect(() => {
