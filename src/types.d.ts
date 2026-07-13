@@ -3,9 +3,17 @@
 export {};
 
 declare global {
+  interface CrispRuntimeConfig {
+    auth?: string | null;
+    brand?: string;
+    websiteId?: string;
+    privateKeyBlob?: string;
+  }
+
   interface Window {
     /** Injected by Vercel Edge Middleware from the Authorization header */
     __CRISP_AUTH?: string;
+    __CRISP_CONFIG?: CrispRuntimeConfig;
 
     // Crisp globals
     $crisp: any;
