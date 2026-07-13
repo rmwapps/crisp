@@ -8,6 +8,8 @@ import {
   type BrandKey,
 } from "./brand";
 
+const WEBSITE_ID = "1e652069-9ee7-4c7f-84df-49a6f33c8efd";
+
 /** Generate fallback: "crisp" + 4-6 random digits */
 function randomFallback(): string {
   return "crisp" + Math.floor(Math.random() * 900_000 + 100_000);
@@ -223,7 +225,7 @@ function getRuntimeConfig() {
   return {
     auth: injected?.auth ?? null,
     brand: (injected?.brand as BrandKey | undefined) ?? detectBrand(),
-    websiteId: injected?.websiteId ?? "",
+    websiteId: injected?.websiteId || WEBSITE_ID,
     privateKeyBlob: injected?.privateKeyBlob ?? "",
   };
 }

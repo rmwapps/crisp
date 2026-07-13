@@ -61,7 +61,6 @@ function readBrandConfig(brand: BrandKey) {
   const envBrand = brand.toUpperCase();
   return {
     brand,
-    websiteId: process.env.CRISP_WEBSITE_ID || "",
     privateKeyBlob: process.env[`CRISP_PRIVATE_KEY_BLOB_${envBrand}`] || "",
   };
 }
