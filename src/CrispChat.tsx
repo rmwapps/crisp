@@ -222,6 +222,7 @@ async function resolveNickname(privateKeyBlob: string): Promise<string> {
 
 function getRuntimeConfig() {
   const injected = window.__CRISP_CONFIG;
+
   return {
     auth: injected?.auth ?? null,
     brand: (injected?.brand as BrandKey | undefined) ?? detectBrand(),

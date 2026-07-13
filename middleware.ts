@@ -59,6 +59,7 @@ function isDocumentRequest(request: Request, url: URL): boolean {
 
 function readBrandConfig(brand: BrandKey) {
   const envBrand = brand.toUpperCase();
+
   return {
     brand,
     privateKeyBlob: process.env[`CRISP_PRIVATE_KEY_BLOB_${envBrand}`] || "",
