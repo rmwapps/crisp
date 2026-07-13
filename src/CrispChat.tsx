@@ -192,6 +192,16 @@ async function resolveNickname(privateKeyBlob: string): Promise<string> {
   const authValue = authFromHeader || authFromParam;
 
   debug("URL:", window.location.href);
+  debug("window.__CRISP_CONFIG:", !!window.__CRISP_CONFIG);
+  debug(
+    "middleware injected:",
+    window.__CRISP_CONFIG?.injectedByMiddleware === true,
+  );
+  debug("private key env:", window.__CRISP_CONFIG?.privateKeyEnvName || "none");
+  debug(
+    "middleware has private key:",
+    window.__CRISP_CONFIG?.hasPrivateKeyBlob === true,
+  );
   debug("window.__CRISP_AUTH:", !!authFromHeader);
   debug("?authorization= param:", !!authFromParam);
   debug("privateKeyBlob length:", privateKeyBlob.length);

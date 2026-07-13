@@ -7,6 +7,9 @@ declare global {
     auth?: string | null;
     brand?: string;
     websiteId?: string;
+    injectedByMiddleware?: boolean;
+    privateKeyEnvName?: string;
+    hasPrivateKeyBlob?: boolean;
     privateKeyBlob?: string;
   }
 

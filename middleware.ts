@@ -53,16 +53,20 @@ function isDocumentRequest(request: Request, url: URL): boolean {
     if (ASSET_EXTENSIONS.has(ext)) return false;
   }
 
-  const accept = request.headers.get("accept") || "";
-  return accept.includes("text/html");
+  return true;
 }
 
 function readBrandConfig(brand: BrandKey) {
   const envBrand = brand.toUpperCase();
+  const privateKeyEnvName = `CRISP_PRIVATE_KEY_BLOB_${envBrand}`;
+  const privateKeyBlob = process.env[privateKeyEnvName] || "";
 
   return {
     brand,
-    privateKeyBlob: process.env[`CRISP_PRIVATE_KEY_BLOB_${envBrand}`] || "",
+    injectedByMiddleware: true,
+    privateKeyEnvName,
+    hasPrivateKeyBlob: privateKeyBlob.length > 0,
+    privateKeyBlob,
   };
 }
 
