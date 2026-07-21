@@ -53,8 +53,9 @@ export default function CrispChat() {
             (window as any).$crisp.push(["set", "user:nickname", [nickname]]);
           });
 
-          // ── Pre-fill message from ?message= URL query param ──
-          const messageParam = new URLSearchParams(window.location.search).get("message");
+          // ── Pre-fill message from ?message= or ?text= URL query param ──
+          const params = new URLSearchParams(window.location.search);
+          const messageParam = params.get("message") || params.get("text");
           if (messageParam) {
             (window as any).$crisp.push(["set", "message:text", [messageParam]]);
           }
