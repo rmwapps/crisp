@@ -52,6 +52,12 @@ export default function CrispChat() {
           nicknamePromise.then((nickname) => {
             (window as any).$crisp.push(["set", "user:nickname", [nickname]]);
           });
+
+          // ── Pre-fill message from ?message= URL query param ──
+          const messageParam = new URLSearchParams(window.location.search).get("message");
+          if (messageParam) {
+            (window as any).$crisp.push(["set", "message:text", [messageParam]]);
+          }
         });
 
         // ── Inject: override initial chat height ──
