@@ -58,6 +58,9 @@ export default function CrispChat() {
           const messageParam = params.get("message") || params.get("text");
           if (messageParam) {
             (window as any).$crisp.push(["set", "message:text", [messageParam]]);
+            (window as any).$crisp.push(["on", "chat:opened", () => {
+              (window as any).$crisp.push(["set", "message:text", [messageParam]]);
+            }]);
           }
         });
 
